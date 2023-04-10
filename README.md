@@ -1,11 +1,12 @@
-# Zaštita lozinki simetričnom enkripcijom
+# Alati za upravljanje zaporkama i prijavu
 
-Ovaj program pisan je u programskom jeziku ```python``` te je za implementaciju kriptografskih funkcija korišten python paket ```pycryptodome``` https://pycryptodome.readthedocs.io/en/latest/src/introduction.html i moduli: ```Crypto.Hash```, ```Crypto.Random```, ```Crypto.Cipher```, ```Crypto.Protocol```. Pokreće se iz komandne linije uz ključne riječi i dodatne proizvoljne argumente.
+Ovi programi pisani su u programskom jeziku ```python``` te je za implementaciju kriptografskih funkcija korišten python paket ```pycryptodome``` https://pycryptodome.readthedocs.io/en/latest/src/introduction.html i moduli: ```Crypto.Hash```, ```Crypto.Random```, ```Crypto.Cipher```, ```Crypto.Protocol```. Pokreću se iz komandne linije uz ključne riječi i dodatne proizvoljne argumente.
 
-## Mogućnosti programa:
-- inicijalizacija ```init```
-- pohrana/update para adresa-zaporka ```put```
-- dohvat zaporke za određenu adresu ```get```
+## Mogućnosti programa usermgmt:
+- dodavanje novog korisnika ```add```
+- promjena lozinke postojećem korisniku ```passwd```
+- brisanje korisnika ```del```
+- forsiranje promjene lozinke pri sljedećem loginu ```forcepass```
 
 ## Organizacija baze
 
