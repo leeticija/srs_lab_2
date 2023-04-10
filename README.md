@@ -56,3 +56,9 @@ Prilikom logina provode se sljedeći koraci:
 
 ```key = PBKDF2(master_pass, decoded_salt, 32, count=1000, hmac_hash_module=SHA512)```
 - dekriptiranje pomoću stvorenog ključa
+
+## Sigurnosni zahtjevi
+- sve lozinke su kriptirane prije spremanja u bazu
+- napadač ne može saznati ništa o duljini lozinka
+- pri unosu lozinke, unos nije vidljiv
+- samo administrator može dodavati nove korisnike
