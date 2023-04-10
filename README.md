@@ -12,48 +12,24 @@ Ovi programi pisani su u programskom jeziku ```python``` te je za implementaciju
 
 Baza podataka ima sljedeće tablice i podatke:
 
-```TABLE passwords(address VARCHAR, password VARCHAR, salt VARCHAR)```
+```TABLE passwords(username VARCHAR, password VARCHAR, salt VARCHAR, change_pass INTEGER)```
 
 ```TABLE master_password(master_password VARCHAR, salt VARCHAR)```
 
-## Inicijalizacija password managera
+## Kriptiranje korisnika u bazi podataka aplikacije
 
-Komanda za inicijalizaciju password managera je sljedeća: ```./secretary init {masterPassword}```
+User manager sve podatke zapisuje u bazu podataka. Pri svakom dohvatu/spremanju podataka stvara se simetrični ključ. dijelovi potrebni za generiranje ključa su masterPassword i random salt. MasterPassword je definiran u aplikaciji te spremljen u bazu podataka. Salt je random generirana vrijednost koja je uvijek jedinstvena. Nju je također potrebno negdje spremiti jer je potrebna za dekripciju. 
 
-Password manager sve podatke zapisuje u bazu podataka. Pri svakom dohvatu/spremanju podataka prvo se provjerava uneseni masterPassword. Zato je ovaj korak inicijalizacije jako bitan. Kao prvo, masterPassword potrebno je negdje spremiti da bismo kod kasnijih njegovih provjera nekako mogli do njega doći. MasterPassword spremljen je u zasebnu tablicu u bazi podataka uz sljedeće korake:
+- prilikom enkripcije funkcija ```encrypt()``` samostalno generira ```nonce``` (najčešće informacija od 16 bajtova) koja služi kao dodatna metoda zaštite i jednokratno se koristi. ```nonce``` je potreban i za dekripciju pa ga je potrebno sačuvati. Stoga se prefiksira na šifrat lozinke te se zatim enkodira ```base64``` enkoderom i sprema u bazu. Prilikom dešifriranja lako se ponovno ekstrahira (prvih 16 bajtova).
 
-- generiranje ```salt``` vrijednosti te ključa za simetričnu enkripciju komandama:
 
-```salt = get_random_bytes(16)```
+## Pohrana/update para username-zaporka
 
-```PBKDF2(masterPassword, salt, 32, count=1000, hmac_hash_module=SHA512)```
+Komanda za pohranu nove i update postojeće zaporke je sljedeća: ```./usermgmt add {username}``` te ```./usermgmt passwd {username}```
 
-- računanje hash sume raw vrijednosti danog master passworda:
-
-```master_sha = SHA256.new(data=masterPassword, 'utf-8')).digest()```
-
-- enkripcija dobivene hash vrijednost:
-
-```AES.encrypt(master_sha)```
-
-- prilikom enkripcije funkcija ```encrypt()``` samostalno generira ```nonce``` (najčešće informacija od 16 bajtova) koja služi kao dodatna metoda zaštite i jednokratno se koristi. ```nonce``` je potreban i za dekripciju pa ga je potrebno sačuvati. Stoga se prefiksira na šifrat lozinke te se zatim enkodira ```base64``` enkoderom i sprema u bazu. Prilikom dešifriranja masterPassworda lako se ponovno ekstrahira (prvih 16 bajtova).
-
-## Provjera master zaporke
-
-Budući da se prilikom svake akcije provjerava uneseni masterPassword, potrebno je i taj postupak dodatno opisati. To se događa na sljedeći način:
-
-- iz baze podataka (tablice master_password) dohvati se ```salt``` te se pomoću ```KDF(given_masterPassword, salt)``` generira ključ
-- ekstrahira se ```nonce``` (prvih 16 bajtova columna master_password) te se dešifrira ostatak bajtova
-- budući da je u bazu bio šifriran i spremljen samo sažetak masterPassworda, dešifriranjem dobijemo taj sažetak
-- ispravnost masterPassworda potvrdimo usporedbom sažetka **unesenog** masterPassworda i **dešifriranog** masterPassworda
-
-## Pohrana/update para adresa-zaporka
-
-Komanda za pohranu nove ili update postojeće zaporke je sljedeća: ```./secretary put {masterPassword} {address} {addressPassword}```
-
-- napravi se SHA suma dane adrese te se u bazi pokuša pronaći redak u kojem se nalazi ta adresa
+- napravi se SHA suma danog usernamea te se u bazi pokuša pronaći redak u kojem se nalazi
 - ako redak **ne** postoji, stvorit će se novi zapis i spremiti se istim postupkom kao i kod updatea, a on je opisan u nastavku
-- generira se ```salt``` vrijednost te ključ za simetričnu enkripciju
+- generira se `salt` vrijednost te ključ za simetričnu enkripciju
 
 ```salt = get_random_bytes(16)```
 ```key = PBKDF2(master_pass.strip(), salt, 32, count=1000, hmac_hash_module=SHA512)```
@@ -66,14 +42,16 @@ Komanda za pohranu nove ili update postojeće zaporke je sljedeća: ```./secreta
 - prilikom enkripcije funkcija ```encrypt()``` samostalno generira ```nonce``` (najčešće informacija od 16 bajtova) koja služi kao dodatna metoda zaštite i jednokratno se koristi. ```nonce``` je potreban i za dekripciju pa ga je potrebno sačuvati. Stoga se prefiksira na šifrat lozinke te se zatim sve enkodira ```base64``` enkoderom i sprema u bazu. Prilikom dešifriranja passworda lako se ponovno ekstrahira (prvih 16 bajtova).
 
 
-## Dohvat lozinke za određenu adresu
+## Program za login
 
-Prilikom dohvata lozinke za određenu adresu provode se sljedeći koraci:
-- računanje SHA sume dane adrese
+Komanda za login korisnika je:```./login {username}```
 
-```address_sha = SHA256.new(data=bytes(address, 'utf-8')).digest()```
+Prilikom logina provode se sljedeći koraci:
+- računanje SHA sume danog korisničkog imena
 
-- dohvat adrese iz baze (jer su u bazi adrese spremljene kao SHA sume)
+```username_sha = SHA256.new(data=bytes(address, 'utf-8')).digest()```
+
+- dohvat usera iz baze (jer su u bazi korisnici spremljene kao SHA sume)
 - generiranje simetričnog ključa pomoću dohvaćenog ```salta```
 
 ```key = PBKDF2(master_pass, decoded_salt, 32, count=1000, hmac_hash_module=SHA512)```
